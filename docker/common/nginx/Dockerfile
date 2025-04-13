@@ -35,17 +35,17 @@ USER nginx
 CMD ["nginx","-g","daemon off;"]
 
 
-# ============================================= COMMON API IMAGE =============================================
+# ==================== COMMON API IMAGE ====================
 FROM common_nginx AS common_api_nginx
 COPY ./docker/api/common/nginx/conf.d /etc/nginx/conf.d/
 
-# ============================================= LOCAL API IMAGE =============================================
+# ==================== LOCAL API IMAGE ====================
 FROM common_api_nginx AS local_api_nginx
 
-# ============================================= DEV API IMAGE =============================================
+# ==================== DEV API IMAGE ====================
 FROM common_api_nginx AS dev_api_nginx
 COPY --chown=nginx ./api/public ./public
 
-# ============================================= PROD API IMAGE =============================================
+# ==================== PROD API IMAGE ====================
 FROM common_api_nginx AS prod_api_nginx
 COPY --chown=nginx ./api/public ./public
