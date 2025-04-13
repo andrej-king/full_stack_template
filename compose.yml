@@ -16,7 +16,7 @@ services:
             TZ: "UTC"
 
     api:
-        image: ${REGISTRY}/${ENV}-nginx:${IMAGE_TAG}
+        image: ${REGISTRY}/${ENV}-api-nginx:${IMAGE_TAG}
         networks:
             - proxy-public
             - default
