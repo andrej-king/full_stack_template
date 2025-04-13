@@ -1,0 +1,69 @@
+# Local dev compose file
+
+name: app
+
+services:
+    gateway:
+        command:
+            # logs
+            - --accesslog=true
+            - --log.level=WARN
+
+            # enable proxy dashboard
+            #- --api.dashboard=true
+            - --api.insecure=true
+
+            # listen docker provider
+            - --providers.docker=true
+            - --providers.docker.exposedByDefault=false
+
+            # Load dynamic configuration from one or more .yml or .toml files in a directory.
+            - -providers.file.directory=/config
+
+            # Create an entry point listening on port 80
+            - --entryPoints.http.address=:80
+            - --entryPoints.https.address=:443
+
+            # set response read / write timeouts
+            - --entryPoints.http.transport.respondingTimeouts.readTimeout=300s
+            - --entryPoints.https.transport.respondingTimeouts.writeTimeout=300s
+
+            # enable /ping health-check URL
+            - --ping=true
+        healthcheck:
+            test: [ "CMD", "traefik", "healthcheck", "--ping" ]
+            interval: 5s
+            timeout: 3s
+            retries: 3
+        labels:
+            traefik.enable: true
+            traefik.docker.network: proxy-public
+            traefik.http.routers.proxy.entryPoints: http
+            traefik.http.routers.proxy.rule: Host(`proxy.localhost`)
+            traefik.http.routers.proxy.middlewares: "secure-headers@file"
+            traefik.http.services.proxy.loadBalancer.server.port: 8080
+
+    # api nginx
+    api:
+        volumes:
+            - ./api/public:/app/public
+        labels:
+            traefik.enable: true
+            traefik.docker.network: proxy-public
+            traefik.http.services.api.loadBalancer.server.port: 80
+            traefik.http.routers.api.rule: Host(`api.localhost`)
+            traefik.http.routers.api.entryPoints: http
+            traefik.http.routers.api.middlewares: "secure-headers@file"
+
+            # extend file middlewares by labels
+            #traefik.http.routers.api.middlewares: "secure-headers@file,api-extra-headers"
+            #traefik.http.middlewares.api-extra-headers.headers.customResponseHeaders.X-Robots-Tag: "noindex, nofollow"
+
+    api-php-fpm:
+        volumes:
+            - ./api/:/app
+
+networks:
+    proxy-public:
+        name: proxy-public
+        external: false
