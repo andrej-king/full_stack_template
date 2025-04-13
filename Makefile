@@ -69,12 +69,12 @@ down-and-remove-all-containers: ## Stop and remove every container
 .PHONY: down-and-remove-all-containers
 
 build: ## Build docker images
-	$(DOCKER_BAKE)
+	$(DOCKER_BAKE) $(ENV)
 #$(DOCKER_COMPOSE) build
 .PHONY: build
 
 build-no-cache: ## Build docker images
-	USE_DOCKER_CACHE=0 $(DOCKER_BAKE)
+	USE_DOCKER_CACHE=0 $(DOCKER_BAKE) $(ENV)
 #$(DOCKER_COMPOSE) build --no-cache
 .PHONY: build-no-cache
 

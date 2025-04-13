@@ -8,10 +8,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy common config files
 COPY ./docker/common/nginx/nginx.conf /etc/nginx/nginx.conf
-
-# Copy app common config files
-COPY ./api/docker/common/nginx/snippets /etc/nginx/snippets
-COPY ./api/docker/common/nginx/conf.d /etc/nginx/conf.d/
+COPY ./docker/common/nginx/snippets /etc/nginx/snippets
 
 WORKDIR /app
 
@@ -38,8 +35,17 @@ USER nginx
 CMD ["nginx","-g","daemon off;"]
 
 
-# ============================================= LOCAL DEV IMAGE =============================================
-FROM common_nginx AS local_nginx
+# ==================== COMMON API IMAGE ====================
+FROM common_nginx AS common_api_nginx
+COPY ./docker/api/common/nginx/conf.d /etc/nginx/conf.d/
 
-# Copy local config files
-#COPY ./api/docker/local/nginx/conf.d/ /etc/nginx/conf.d/
+# ==================== LOCAL API IMAGE ====================
+FROM common_api_nginx AS local_api_nginx
+
+# ==================== DEV API IMAGE ====================
+FROM common_api_nginx AS dev_api_nginx
+COPY --chown=nginx ./api/public ./public
+
+# ==================== PROD API IMAGE ====================
+FROM common_api_nginx AS prod_api_nginx
+COPY --chown=nginx ./api/public ./public

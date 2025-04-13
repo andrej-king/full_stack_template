@@ -8,7 +8,7 @@ variable "DOCKER_DEFAULT_PLATFORM" { default = "linux/amd64" }
 variable "UID" { default = 1000 }
 variable "GID" { default = 1000 }
 
-group "default" {
+group "local" {
     targets = [ "api-nginx" ]
 }
 
@@ -32,11 +32,11 @@ target "_common" {
 
 target "api-nginx" {
     inherits = [ "_common" ]
-    dockerfile = "api/docker/common/nginx/Dockerfile"
-    target     = "${ENV}_nginx"
+    dockerfile = "docker/common/nginx/Dockerfile"
+    target     = "${ENV}_api_nginx"
     tags = [
-        "${REGISTRY}/${ENV}-nginx:${IMAGE_TAG}",
-        "${REGISTRY}/${ENV}-nginx:latest",
+        "${REGISTRY}/${ENV}-api-nginx:${IMAGE_TAG}",
+        "${REGISTRY}/${ENV}-api-nginx:latest",
     ]
     # cache-from = [ "type=registry,ref=${REGISTRY}/${ENV}-common-nginx:cache" ]
 }
