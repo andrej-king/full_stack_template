@@ -7,10 +7,15 @@
 ## Links
 
 - [Gateway dashboard (http://proxy.localhost)](http://proxy.localhost)
+- [Api (http://api.localhost)](http://api.localhost)
 
 ## Commands
 
-- ```bash
-  # Start all app services
+- Start all app services
+  ```bash
   make init
+  ```
+- Generate basic auth credentials
+  ```bash
+  make generate-basic-auth
   ```

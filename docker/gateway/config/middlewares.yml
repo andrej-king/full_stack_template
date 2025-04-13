@@ -1,0 +1,28 @@
+http:
+    middlewares:
+        main-basic-auth:
+            basicAuth:
+                realm: "Access denied"
+                usersFile: "/config/main.htpasswd"
+                removeHeader: "true"
+
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers
+        # https://doc.traefik.io/traefik/middlewares/http/headers
+        secure-headers:
+            headers:
+                #stsSeconds: "31536000"                             # Strict-Transport-Security
+                #stsIncludeSubdomains: "true"                       # Strict-Transport-Security
+                #stsPreload: "true"                                 # Strict-Transport-Security
+                contentTypeNosniff: "true"                          # X-Content-Type-Options: "nosniff"
+                referrerPolicy: "strict-origin"                     # Referrer-Policy: "strict-origin"
+                contentSecurityPolicy: "frame-ancestors 'self'"     # Content-Security-Policy: "frame-ancestors 'self'";
+                #frameDeny: "false"                                 # X-Frame-Options: DENY
+                customResponseHeaders:
+                    X-Frame-Options: "SAMEORIGIN"
+                    Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+                #customRequestHeaders:
+
+        redirect-to-https:
+            redirectScheme:
+                scheme: "https"
+                permanent: "true"

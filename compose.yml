@@ -1,49 +1,36 @@
-# Local dev compose file
-
-name: app
+# https://doc.traefik.io/traefik/
+# options: docker run traefik:v3.3 --help
 
 services:
     gateway:
         image: traefik:3.3
-        command:
-            - --api.dashboard=true
-            - --api.insecure=true
-            - --providers.docker=true
-            - --providers.docker.exposedByDefault=false
-            - --entryPoints.http.address=:80
-
-            # ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set.
-            - --entryPoints.http.transport.respondingTimeouts.readTimeout=300s
-
-            # WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set.
-            - --entryPoints.https.transport.respondingTimeouts.writeTimeout=300s
-
-            # Enable /ping health-check URL
-            - --ping=true
+        volumes:
+            - ./docker/gateway/config/:/config/:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro
         ports:
             - "80:80"
+            - "443:443"
         networks:
             - proxy-public
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock:ro
         environment:
             TZ: "UTC"
-        healthcheck:
-            test: [ "CMD", "traefik", "healthcheck", "--ping" ]
-            interval: 5s
-            timeout: 3s
-            retries: 3
-        labels:
-            traefik.enable: true
-            traefik.docker.network: proxy-public
-            traefik.http.routers.proxy.entryPoints: http
-            traefik.http.routers.proxy.rule: Host(`proxy.localhost`)
-            traefik.http.services.proxy.loadBalancer.server.port: 8080
+
+    api:
+        image: ${REGISTRY}/${ENV}-nginx:${IMAGE_TAG}
+        networks:
+            - proxy-public
+            - default
+
+    api-php-fpm:
+        image: php:8.4-fpm-bookworm
+        secrets:
+            - db_password
 
 secrets:
-    api_db_password:
-        file: ./docker/local/secrets/api_db_password
+    db_password:
+        file: ./docker/secrets/db_password
 
 networks:
     proxy-public:
         name: proxy-public
+        external: true

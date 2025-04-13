@@ -15,19 +15,27 @@ export DOCKER_DEFAULT_PLATFORM=linux/$(ARCH_VALUE)
 export UID=$(shell id -u)
 export GID=$(shell id -g)
 
+# Export default values
+export ENV=local
+export REGISTRY=localhost
+export IMAGE_TAG=latest
+
 -include $(API_DIR)/.env
 -include $(API_DIR)/.env.local
 export
 
-DOCKER_COMPOSE_OPTIONS := -f compose.yml
+DOCKER_COMPOSE_OPTIONS := -f compose.yml -f compose.override.yml
 DOCKER_COMPOSE         := docker compose $(DOCKER_COMPOSE_OPTIONS)
+DOCKER_BAKE            := docker buildx bake --file docker-bake.hcl
 PHP                    := $(DOCKER_COMPOSE) run --rm api-php-cli php
 PHP_CONTAINER_SHELL    := $(DOCKER_COMPOSE) run --rm api-php-cli
 COMPOSER_BIN           := $(DOCKER_COMPOSE) run --rm api-php-cli composer
 BIN_CONSOLE            := $(PHP) bin/console
 ALPINE_API			   := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app alpine
 
-init: down up
+init: ## Run app
+	@make down \
+ 		build up
 .PHONY: init
 
 prepare: ## Init common configs
@@ -40,7 +48,7 @@ vendor: ## Install all dependencies
 .PHONY: vendor
 
 ##
-## Docker compose commands
+## Docker commands
 ## ------
 
 up: ## Run docker app
@@ -61,16 +69,30 @@ down-and-remove-all-containers: ## Stop and remove every container
 .PHONY: down-and-remove-all-containers
 
 build: ## Build docker images
-	$(DOCKER_COMPOSE) build
+	$(DOCKER_BAKE)
+#$(DOCKER_COMPOSE) build
 .PHONY: build
 
 build-no-cache: ## Build docker images
-	$(DOCKER_COMPOSE) build --no-cache
+	USE_DOCKER_CACHE=0 $(DOCKER_BAKE)
+#$(DOCKER_COMPOSE) build --no-cache
 .PHONY: build-no-cache
 
 logs: ## Print docker compose logs
 	$(DOCKER_COMPOSE) logs
 .PHONY: logs
+
+DEFAULT_BASIC_AUTH_FILENAME := main
+DEFAULT_BASIC_AUTH_EXT      := htpasswd
+generate-basic-auth: ## Generate HTTP basic auth auth credentials file
+	@read -p "Enter basic auth filename [$(DEFAULT_BASIC_AUTH_FILENAME).$(DEFAULT_BASIC_AUTH_EXT)]: " BASIC_AUTH_FILENAME && \
+	read -p "Enter username: " AUTH_USERNAME && \
+	read -p "Enter password: " AUTH_PASSWORD && \
+	export NEW_BASIC_AUTH_FILENAME=$${BASIC_AUTH_FILENAME:-$(DEFAULT_BASIC_AUTH_FILENAME).$(DEFAULT_BASIC_AUTH_EXT)} && \
+	export AUTH_USERNAME AUTH_PASSWORD && \
+	docker run --rm --entrypoint htpasswd httpd:2 -Bbn $${AUTH_USERNAME} $${AUTH_PASSWORD} > ./docker/gateway/config/$${NEW_BASIC_AUTH_FILENAME}
+#echo "$${AUTH_USERNAME}:$${AUTH_PASSWORD} $${NEW_BASIC_AUTH_FILENAME}"
+.PHONY: generate-basic-auth
 
 ##
 ## API commands

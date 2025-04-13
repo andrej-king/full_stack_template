@@ -1,0 +1,42 @@
+# common config file for build docker images
+
+variable "ENV" { default = "local" }
+variable "REGISTRY" { default = "localhost" }
+variable "IMAGE_TAG" { default = "latest" }
+variable "USE_DOCKER_CACHE" { default = 1 }
+variable "DOCKER_DEFAULT_PLATFORM" { default = "linux/amd64" }
+variable "UID" { default = 1000 }
+variable "GID" { default = 1000 }
+
+group "default" {
+    targets = [ "api-nginx" ]
+}
+
+group "dev" {
+    targets = [ "api-nginx" ]
+}
+
+group "prod" {
+    targets = [ "api-nginx" ]
+}
+
+target "_common" {
+    context    = "."
+    no-cache = equal(0, USE_DOCKER_CACHE)
+    args = {
+        UID                     = UID
+        GID                     = GID
+        DOCKER_DEFAULT_PLATFORM = "${DOCKER_DEFAULT_PLATFORM}"
+    }
+}
+
+target "api-nginx" {
+    inherits = [ "_common" ]
+    dockerfile = "api/docker/common/nginx/Dockerfile"
+    target     = "${ENV}_nginx"
+    tags = [
+        "${REGISTRY}/${ENV}-nginx:${IMAGE_TAG}",
+        "${REGISTRY}/${ENV}-nginx:latest",
+    ]
+    # cache-from = [ "type=registry,ref=${REGISTRY}/${ENV}-common-nginx:cache" ]
+}
