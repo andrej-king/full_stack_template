@@ -82,16 +82,17 @@ logs: ## Print docker compose logs
 	$(DOCKER_COMPOSE) logs
 .PHONY: logs
 
-DEFAULT_BASIC_AUTH_FILENAME := main
-DEFAULT_BASIC_AUTH_EXT      := htpasswd
-generate-basic-auth: ## Generate HTTP basic auth auth credentials file
-	@read -p "Enter basic auth filename [$(DEFAULT_BASIC_AUTH_FILENAME).$(DEFAULT_BASIC_AUTH_EXT)]: " BASIC_AUTH_FILENAME && \
-	read -p "Enter username: " AUTH_USERNAME && \
-	read -p "Enter password: " AUTH_PASSWORD && \
-	export NEW_BASIC_AUTH_FILENAME=$${BASIC_AUTH_FILENAME:-$(DEFAULT_BASIC_AUTH_FILENAME).$(DEFAULT_BASIC_AUTH_EXT)} && \
-	export AUTH_USERNAME AUTH_PASSWORD && \
-	docker run --rm --entrypoint htpasswd httpd:2 -Bbn $${AUTH_USERNAME} $${AUTH_PASSWORD} > ./docker/gateway/config/$${NEW_BASIC_AUTH_FILENAME}
-#echo "$${AUTH_USERNAME}:$${AUTH_PASSWORD} $${NEW_BASIC_AUTH_FILENAME}"
+generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in the following format: some_name.htpasswd
+	@DEFAULT_BASIC_AUTH_FILENAME=main; \
+	DEFAULT_BASIC_AUTH_EXT=htpasswd; \
+	CONFIG_DIR=./docker/gateway/config;\
+	read -p "Enter basic auth filename [$${DEFAULT_BASIC_AUTH_FILENAME}.$${DEFAULT_BASIC_AUTH_EXT})]: " BASIC_AUTH_FILENAME; \
+	read -p "Enter username: " AUTH_USERNAME; \
+    read -p "Enter password: " AUTH_PASSWORD; \
+	export NEW_BASIC_AUTH_FILENAME=$${BASIC_AUTH_FILENAME:-$${DEFAULT_BASIC_AUTH_FILENAME}}.$${DEFAULT_BASIC_AUTH_EXT}; \
+	export AUTH_USERNAME AUTH_PASSWORD; \
+	docker run --rm --entrypoint htpasswd httpd:2 -Bbn $${AUTH_USERNAME} $${AUTH_PASSWORD} > $$CONFIG_DIR/$${NEW_BASIC_AUTH_FILENAME}; \
+	echo "File '$$CONFIG_DIR/$${NEW_BASIC_AUTH_FILENAME}' created with credentials: $${AUTH_USERNAME}:$${AUTH_PASSWORD}"
 .PHONY: generate-basic-auth
 
 ##
