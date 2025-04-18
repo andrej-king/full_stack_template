@@ -16,10 +16,12 @@ export UID=$(shell id -u)
 export GID=$(shell id -g)
 
 # Export default values
+# TODO will replace the environment variables of the deploy server?
 export ENV=local
 export REGISTRY=localhost
 export IMAGE_TAG=latest
 
+# TODO will replace the environment variables of the deploy server?
 -include $(API_DIR)/.env
 -include $(API_DIR)/.env.local
 export
