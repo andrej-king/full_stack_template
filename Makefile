@@ -15,15 +15,11 @@ export DOCKER_DEFAULT_PLATFORM=linux/$(ARCH_VALUE)
 export UID=$(shell id -u)
 export GID=$(shell id -g)
 
-# Export default values
-# TODO will replace the environment variables of the deploy server?
-export ENV=local
-export REGISTRY=localhost
-export IMAGE_TAG=latest
-
-# TODO will replace the environment variables of the deploy server?
+# Load app variables by ENV (env extend default file)
 -include $(API_DIR)/.env
 -include $(API_DIR)/.env.local
+-include $(API_DIR)/.env.dev
+-include $(API_DIR)/.env.prod
 export
 
 DOCKER_COMPOSE_OPTIONS := -f compose.yml -f compose.override.yml
@@ -71,13 +67,11 @@ down-and-remove-all-containers: ## Stop and remove every container
 .PHONY: down-and-remove-all-containers
 
 build: ## Build docker images
-	$(DOCKER_BAKE) $(ENV)
-#$(DOCKER_COMPOSE) build
+	$(DOCKER_BAKE) $(APP_ENV)
 .PHONY: build
 
 build-no-cache: ## Build docker images
-	USE_DOCKER_CACHE=0 $(DOCKER_BAKE) $(ENV)
-#$(DOCKER_COMPOSE) build --no-cache
+	USE_DOCKER_CACHE=0 $(DOCKER_BAKE) $(APP_ENV)
 .PHONY: build-no-cache
 
 logs: ## Print docker compose logs

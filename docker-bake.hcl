@@ -1,6 +1,6 @@
 # common config file for build docker images
 
-variable "ENV" { default = "local" }
+variable "APP_ENV" { default = "local" }
 variable "REGISTRY" { default = "localhost" }
 variable "IMAGE_TAG" { default = "latest" }
 variable "USE_DOCKER_CACHE" { default = 1 }
@@ -33,10 +33,10 @@ target "_common" {
 target "api-nginx" {
     inherits = [ "_common" ]
     dockerfile = "docker/common/nginx/Dockerfile"
-    target     = "${ENV}_api_nginx"
+    target     = "${APP_ENV}_api_nginx"
     tags = [
-        "${REGISTRY}/${ENV}-api-nginx:${IMAGE_TAG}",
-        "${REGISTRY}/${ENV}-api-nginx:latest",
+        "${REGISTRY}/${APP_ENV}-api-nginx:${IMAGE_TAG}",
+        "${REGISTRY}/${APP_ENV}-api-nginx:latest",
     ]
-    # cache-from = [ "type=registry,ref=${REGISTRY}/${ENV}-common-nginx:cache" ]
+    # cache-from = [ "type=registry,ref=${REGISTRY}/${APP_ENV}-common-nginx:cache" ]
 }
