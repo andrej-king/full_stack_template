@@ -22,17 +22,23 @@ export GID=$(shell id -g)
 -include $(API_DIR)/.env.prod
 export
 
-DOCKER_COMPOSE_OPTIONS := -f compose.yml -f compose.override.yml
-DOCKER_COMPOSE         := docker compose $(DOCKER_COMPOSE_OPTIONS)
-DOCKER_BAKE            := docker buildx bake --file docker-bake.hcl
-PHP                    := $(DOCKER_COMPOSE) run --rm api-php-cli php
-PHP_CONTAINER_SHELL    := $(DOCKER_COMPOSE) run --rm api-php-cli
-COMPOSER_BIN           := $(DOCKER_COMPOSE) run --rm api-php-cli composer
-BIN_CONSOLE            := $(PHP) bin/console
-ALPINE_API			   := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app alpine
+# Default docker compose values (or get exists)
+REGISTRY  ?= localhost
+IMAGE_TAG ?= latest
+APP_ENV   ?= local
+
+DOCKER_COMPOSE_OPTIONS   := -f compose.yml -f compose.override.yml
+DOCKER_COMPOSE           := docker compose $(DOCKER_COMPOSE_OPTIONS)
+DOCKER_BAKE              := docker buildx bake --file docker-bake.hcl
+PHP                      := $(DOCKER_COMPOSE) run --rm api-php-cli php
+PHP_CONTAINER_SHELL      := $(DOCKER_COMPOSE) run --rm api-php-cli
+COMPOSER_BIN             := $(DOCKER_COMPOSE) run --rm api-php-cli composer
+BIN_CONSOLE              := $(PHP) bin/console
+DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
 
 init: ## Run app
 	@make down \
+		api-clear \
  		build up
 .PHONY: init
 
@@ -91,6 +97,10 @@ generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in
 	echo "File '$$CONFIG_DIR/$${NEW_BASIC_AUTH_FILENAME}' created with credentials: $${AUTH_USERNAME}:$${AUTH_PASSWORD}"
 .PHONY: generate-basic-auth
 
+composer-container-interactive: ## Run composer:lastest docker container interactive
+	$(DOCKER_CONTAINER_API_DIR) -it composer:latest /bin/bash
+.PHONY: composer-container-interactive
+
 ##
 ## API commands
 ## ------
@@ -100,7 +110,7 @@ api-cli: ## Run interactive php-cli container
 .PHONY: api-cli
 
 api-clear: ## Delete all items except with '.' in start
-	$(ALPINE_API) sh -c 'rm -rf var/cache/* var/cache/.*.cache var/log/* var/test/* '
+	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/cache/.*.cache var/log/* var/test/* '
 .PHONY: api-clear
 
 ##
