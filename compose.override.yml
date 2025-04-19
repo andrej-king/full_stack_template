@@ -47,6 +47,7 @@ services:
     api:
         volumes:
             - ./api/public:/app/public
+            - ./api/var/log:/var/log/nginx
         labels:
             traefik.enable: true
             traefik.docker.network: proxy-public

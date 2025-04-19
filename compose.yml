@@ -1,6 +1,10 @@
 # https://doc.traefik.io/traefik/
 # options: docker run traefik:v3.3 --help
 
+# NB
+#    - Docker swarm do not work with ${VARIABLE}
+#    - envsubst do not replace with default value, example ${VARIABLE:-default}
+
 services:
     gateway:
         image: traefik:3.3
@@ -25,7 +29,7 @@ services:
             TZ: "UTC"
 
     api:
-        image: ${REGISTRY:-localhost}/${APP_ENV:-local}-api-nginx:${IMAGE_TAG:-latest}
+        image: ${REGISTRY}/${APP_ENV}-api-nginx:${IMAGE_TAG}
         networks:
             - proxy-public
             - default
