@@ -34,11 +34,6 @@ DOCKER_BAKE              := docker buildx bake --file docker-bake.hcl
 DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
 SIMPLE_COMPOSER_BIN      := $(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) $(COMPOSER_CONTAINER)
 
-#PHP                      := $(DOCKER_COMPOSE) run --rm api-php-cli php
-#PHP_CONTAINER_SHELL      := $(DOCKER_COMPOSE) run --rm api-php-cli
-#COMPOSER_BIN             := $(DOCKER_COMPOSE) run --rm api-php-cli composer
-#BIN_CONSOLE              := $(PHP) bin/console
-
 init: ## Run app
 	@make docker-down-clear \
 		api-clear \
