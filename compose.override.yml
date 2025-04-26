@@ -37,20 +37,19 @@ services:
             retries: 3
         labels:
             traefik.enable: true
-            traefik.docker.network: proxy-public
+            traefik.docker.network: gateway-network
             traefik.http.routers.proxy.entryPoints: http
             traefik.http.routers.proxy.rule: Host(`proxy.localhost`)
             traefik.http.routers.proxy.middlewares: "secure-headers@file"
             traefik.http.services.proxy.loadBalancer.server.port: 8080
 
-    # api nginx
-    api:
+    api-proxy:
         volumes:
             - ./api/public:/app/public
             - ./api/var/log:/var/log/nginx
         labels:
             traefik.enable: true
-            traefik.docker.network: proxy-public
+            traefik.docker.network: gateway-network
             traefik.http.services.api.loadBalancer.server.port: 80
             traefik.http.routers.api.rule: Host(`api.localhost`)
             traefik.http.routers.api.entryPoints: http
@@ -65,6 +64,6 @@ services:
             - ./api/:/app
 
 networks:
-    proxy-public:
-        name: proxy-public
+    gateway-network:
+        name: gateway-network
         external: false

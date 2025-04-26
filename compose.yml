@@ -24,14 +24,14 @@ services:
             #  protocol: tcp
             #  mode: host
         networks:
-            - proxy-public
+            - gateway-network
         environment:
             TZ: "UTC"
 
-    api:
+    api-proxy:
         image: ${REGISTRY}/${APP_ENV}-api-nginx:${IMAGE_TAG}
         networks:
-            - proxy-public
+            - gateway-network
             - default
 
     api-php-fpm:
@@ -44,6 +44,6 @@ secrets:
         file: ./docker/secrets/db_password
 
 networks:
-    proxy-public:
-        name: proxy-public
+    gateway-network:
+        name: gateway-network
         external: true
