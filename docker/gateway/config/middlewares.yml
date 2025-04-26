@@ -22,6 +22,10 @@ http:
                     Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
                 #customRequestHeaders:
 
+        # https://doc.traefik.io/traefik/middlewares/http/compress/
+        http-compress:
+            compress: {}
+
         redirect-to-https:
             redirectScheme:
                 scheme: "https"

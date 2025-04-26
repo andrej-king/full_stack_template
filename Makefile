@@ -1,5 +1,6 @@
 SHELL = /bin/bash
 API_DIR := api
+COMPOSER_CONTAINER := composer:2.8
 
 # Get the system architecture value
 ARCH_VALUE := $(shell uname -m)
@@ -30,59 +31,71 @@ APP_ENV   ?= local
 DOCKER_COMPOSE_OPTIONS   := -f compose.yml -f compose.override.yml
 DOCKER_COMPOSE           := docker compose $(DOCKER_COMPOSE_OPTIONS)
 DOCKER_BAKE              := docker buildx bake --file docker-bake.hcl
-PHP                      := $(DOCKER_COMPOSE) run --rm api-php-cli php
-PHP_CONTAINER_SHELL      := $(DOCKER_COMPOSE) run --rm api-php-cli
-COMPOSER_BIN             := $(DOCKER_COMPOSE) run --rm api-php-cli composer
-BIN_CONSOLE              := $(PHP) bin/console
 DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
+SIMPLE_COMPOSER_BIN      := $(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) $(COMPOSER_CONTAINER)
+
+#PHP                      := $(DOCKER_COMPOSE) run --rm api-php-cli php
+#PHP_CONTAINER_SHELL      := $(DOCKER_COMPOSE) run --rm api-php-cli
+#COMPOSER_BIN             := $(DOCKER_COMPOSE) run --rm api-php-cli composer
+#BIN_CONSOLE              := $(PHP) bin/console
 
 init: ## Run app
-	@make down \
+	@make docker-down-clear \
 		api-clear \
- 		build up
+ 		docker-pull docker-build docker-up
 .PHONY: init
 
-prepare: ## Init common configs
-	@echo 'APP_SECRET=99eaebf0b00eab05c0042c16fe4f71ce' > $(API_DIR)/.env.local
-	@echo 'APP_DEBUG=1' >> $(API_DIR)/.env.local
+prepare: api-prepare
 .PHONY: prepare
 
-vendor: ## Install all dependencies
-	$(COMPOSER_BIN) install --prefer-dist --no-progress --optimize-autoloader
-.PHONY: vendor
+up: docker-up
+.PHONY: up
+
+down: docker-down
+.PHONY: down
+
+restart: down up
+.PHONY: restart
+
+logs: docker-logs
+.PHONY: logs
 
 ##
 ## Docker commands
 ## ------
 
-up: ## Run docker app
+docker-up: ## Run docker app
 	$(DOCKER_COMPOSE) up --build --remove-orphans --detach
-.PHONY: up
+.PHONY: docker-up
 
-down: ## Stop docker app
+docker-down: ## Stop docker app
 	$(DOCKER_COMPOSE) down --remove-orphans
-.PHONY: stop
+.PHONY: docker-down
 
-down-clear: ## Docker down, remove old containers, remove volumes
+docker-down-clear: ## Docker down, remove old containers, remove volumes
 	$(DOCKER_COMPOSE) down -v --remove-orphans
-.PHONY: down-clear
+.PHONY: docker-down-clear
 
-down-and-remove-all-containers: ## Stop and remove every container
+docker-down-and-remove-all-containers: ## Stop and remove every container
 	docker stop $$(docker ps -qa)
 	docker rm $$(docker ps -qa)
-.PHONY: down-and-remove-all-containers
+.PHONY: docker-down-and-remove-all-containers
 
-build: ## Build docker images
+docker-pull: ## Pull docker images
 	$(DOCKER_BAKE) $(APP_ENV)
-.PHONY: build
+.PHONY: docker-pull
 
-build-no-cache: ## Build docker images
+docker-build: ## Build docker images
+	$(DOCKER_BAKE) $(APP_ENV)
+.PHONY: docker-build
+
+docker-build-no-cache: ## Build docker images
 	USE_DOCKER_CACHE=0 $(DOCKER_BAKE) $(APP_ENV)
-.PHONY: build-no-cache
+.PHONY: docker-build-no-cache
 
-logs: ## Print docker compose logs
+docker-logs: ## Print docker compose logs
 	$(DOCKER_COMPOSE) logs
-.PHONY: logs
+.PHONY: docker-logs
 
 generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in the following format: some_name.htpasswd
 	@DEFAULT_BASIC_AUTH_FILENAME=main; \
@@ -97,41 +110,53 @@ generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in
 	echo "File '$$CONFIG_DIR/$${NEW_BASIC_AUTH_FILENAME}' created with credentials: $${AUTH_USERNAME}:$${AUTH_PASSWORD}"
 .PHONY: generate-basic-auth
 
-composer-container-interactive: ## Run composer:lastest docker container interactive
-	$(DOCKER_CONTAINER_API_DIR) -it composer:latest /bin/bash
-.PHONY: composer-container-interactive
+docker-composer-interactive: ## Run composer:lastest docker container interactive
+	$(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) -it $(COMPOSER_CONTAINER) /bin/bash
+.PHONY: docker-composer-interactive
 
 ##
 ## API commands
 ## ------
 
-api-cli: ## Run interactive php-cli container
-	$(PHP_CONTAINER_SHELL) /bin/bash
-.PHONY: api-cli
+api-init: api-deps-install
+.PHONY: api-init
+
+#api-cli: ## Run interactive php-cli container
+#	$(PHP_CONTAINER_SHELL) /bin/bash
+#.PHONY: api-cli
 
 api-clear: ## Delete all items except with '.' in start
-	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/cache/.*.cache var/log/* var/test/* '
+	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/log/* var/test/*'
 .PHONY: api-clear
+
+api-prepare: ## Prepare api commands
+	@echo 'APP_SECRET=99eaebf0b00eab05c0042c16fe4f71ce' > $(API_DIR)/.env.local
+	@echo 'APP_DEBUG=1' >> $(API_DIR)/.env.local
+.PHONY: api-prepare
 
 ##
 ## Api Dependencies
 ## ------
 
+api-deps-install: ## Install all api dependencies
+	$(SIMPLE_COMPOSER_BIN) install
+.PHONY: api-deps-install
+
 composer-update: ## Update api dependencies
-	$(COMPOSER_BIN) update
-	$(COMPOSER_BIN) bump
+	$(SIMPLE_COMPOSER_BIN) update
+	$(SIMPLE_COMPOSER_BIN) bump
 .PHONY: composer-update
 
 composer-dump: ## Update composer autoload file
-	$(COMPOSER_BIN) dump-autoload
+	$(SIMPLE_COMPOSER_BIN) dump-autoload
 .PHONY: composer-dump
 
 composer-require: ## Add dependencies
-	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(COMPOSER_BIN) require $${COMPOSE_DEPENDENCIES}
+	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(SIMPLE_COMPOSER_BIN) require $${COMPOSE_DEPENDENCIES}
 .PHONY: composer-require
 
 composer-require-dev: ## add dev dependencies
-	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(COMPOSER_BIN) require --dev $${COMPOSE_DEPENDENCIES}
+	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(SIMPLE_COMPOSER_BIN) require --dev $${COMPOSE_DEPENDENCIES}
 .PHONY: composer-require-dev
 
 ##
@@ -139,5 +164,14 @@ composer-require-dev: ## add dev dependencies
 ## ------
 
 composer-validate: ## Check composer.json and composer.lock with composer validate (https://getcomposer.org/doc/03-cli.md#validate)
-	$(COMPOSER_BIN) validate --strict --no-check-publish
+	$(SIMPLE_COMPOSER_BIN) validate --strict --no-check-publish
 .PHONY: composer-validate
+
+##
+## Project configs
+## ------
+
+hosts: ## Add local DNS rows
+	sudo sh -c "echo '127.0.0.1 api.localhost' >> /etc/hosts"
+	sudo sh -c "echo '127.0.0.1 proxy.localhost' >> /etc/hosts"
+.PHONY: hosts
