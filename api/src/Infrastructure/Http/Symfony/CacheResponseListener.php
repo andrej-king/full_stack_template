@@ -11,9 +11,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
 /**
  * Remove default Cache-Control header (modify by proxy nginx)
  */
-#[AsEventListener(event: KernelEvents::RESPONSE, method: 'onKernelResponse')]
 final readonly class CacheResponseListener
 {
+    #[AsEventListener(event: KernelEvents::RESPONSE)]
     public function onKernelResponse(ResponseEvent $event): void
     {
         $response = $event->getResponse();
