@@ -2,20 +2,21 @@
 
 declare(strict_types=1);
 
-namespace App;
+namespace App\Infrastructure;
 
 use RuntimeException;
 
-/**
- * Get string env value from one of sources: environment variable, $_SERVER, $_ENV
- *
- * @param string $name
- * @param string|null $default
- *
- * @return string
- */
-if (!function_exists(__NAMESPACE__ . '\env')) {
-    function env(string $name, ?string $default = null): string
+final readonly class Env
+{
+    /**
+     * Get string env value from one of sources: environment variable, $_SERVER, $_ENV
+     *
+     * @param string $name
+     * @param string|null $default
+     *
+     * @return string
+     */
+    public static function get(string $name, ?string $default = null): string
     {
         $searchFunctions = [
             fn(string $name): ?string => getenv($name) !== false ? (string)getenv($name) : null,

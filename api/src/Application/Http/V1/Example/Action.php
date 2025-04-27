@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Application\Http\V1\Example;
 
 use App\Feature\Client\Example\Request;
+use App\Infrastructure\Env;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Messenger\HandleTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
-
-use function App\env;
 
 final class Action extends AbstractController
 {
@@ -30,7 +29,7 @@ final class Action extends AbstractController
         return new JsonResponse([
             'version' => '1.0',
             'result' => $this->handle($request),
-            'env' => env("APP_ENV", ''),
+            'env' => Env::get("APP_ENV", ''),
         ]);
     }
 }
