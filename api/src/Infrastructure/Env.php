@@ -20,8 +20,8 @@ final readonly class Env
     {
         $searchFunctions = [
             fn(string $name): ?string => getenv($name) !== false ? (string)getenv($name) : null,
-            fn(string $name): ?string => array_key_exists($name, $_SERVER) ? (string)$_SERVER[$name] : null,
             fn(string $name): ?string => array_key_exists($name, $_ENV) ? (string)$_ENV[$name] : null,
+            fn(string $name): ?string => array_key_exists($name, $_SERVER) ? (string)$_SERVER[$name] : null,
         ];
 
         // search value
