@@ -1,5 +1,14 @@
-controllers:
-    resource:
-        path: ../src/Application/Http/
-        namespace: App\Application\Http
+# route groups
+latest:
+    resource: ../src/Application/Http/V1/
     type: attribute
+    prefix: /latest
+    name_prefix: latest_
+    trailing_slash_on_root: false
+
+v1:
+    resource: ../src/Application/Http/V1/
+    type: attribute
+    prefix: /v1
+    name_prefix: v1_
+    trailing_slash_on_root: false

@@ -1,5 +1,5 @@
 ### Send POST request with json body
-POST {{api_host}}/example
+POST {{api_host}}/latest/example
 Content-Type: application/json
 
 {
