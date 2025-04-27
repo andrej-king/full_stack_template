@@ -33,11 +33,13 @@ DOCKER_COMPOSE           := docker compose $(DOCKER_COMPOSE_OPTIONS)
 DOCKER_BAKE              := docker buildx bake --file docker-bake.hcl
 DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
 SIMPLE_COMPOSER_BIN      := $(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) $(COMPOSER_CONTAINER)
+PHP_CLI_SERVICE          := $(DOCKER_COMPOSE) run --rm api-php-cli
 
 init: ## Run app
 	@make docker-down-clear \
 		api-clear \
- 		docker-pull docker-build docker-up
+ 		docker-pull docker-build docker-up \
+ 		api-init
 .PHONY: init
 
 prepare: api-prepare
@@ -113,12 +115,12 @@ docker-composer-interactive: ## Run composer:lastest docker container interactiv
 ## API commands
 ## ------
 
-api-init: api-deps-install
+api-init: ## Api init commands
 .PHONY: api-init
 
-#api-cli: ## Run interactive php-cli container
-#	$(PHP_CONTAINER_SHELL) /bin/bash
-#.PHONY: api-cli
+api-cli: ## Run interactive php-cli container
+	$(PHP_CLI_SERVICE) /bin/bash
+.PHONY: api-cli
 
 api-clear: ## Delete all items except with '.' in start
 	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/log/* var/test/*'

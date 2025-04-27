@@ -35,7 +35,12 @@ services:
             - default
 
     api-php-fpm:
-        image: php:8.4-fpm-bookworm
+        image: ${REGISTRY}/${APP_ENV}-php-fpm:${IMAGE_TAG}
+        secrets:
+            - db_password
+
+    api-php-cli:
+        image: ${REGISTRY}/${APP_ENV}-php-cli:${IMAGE_TAG}
         secrets:
             - db_password
 

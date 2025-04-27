@@ -63,6 +63,10 @@ services:
         volumes:
             - ./api/:/app
 
+    api-php-cli:
+        volumes:
+            - ./api/:/app
+
 networks:
     gateway-network:
         name: gateway-network
