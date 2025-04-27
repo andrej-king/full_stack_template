@@ -9,19 +9,19 @@ variable "UID" { default = 1000 }
 variable "GID" { default = 1000 }
 
 group "local" {
-    targets = [ "api-nginx" ]
+    targets = [ "api-nginx", "api-php-fpm", "api-php-cli" ]
 }
 
 group "dev" {
-    targets = [ "api-nginx" ]
+    targets = [ "api-nginx", "api-php-fpm", "api-php-cli" ]
 }
 
 group "prod" {
-    targets = [ "api-nginx" ]
+    targets = [ "api-nginx", "api-php-fpm", "api-php-cli" ]
 }
 
 target "_common" {
-    context    = "."
+    context = "."
     no-cache = equal(0, USE_DOCKER_CACHE)
     args = {
         UID                     = UID
@@ -38,5 +38,27 @@ target "api-nginx" {
         "${REGISTRY}/${APP_ENV}-api-nginx:${IMAGE_TAG}",
         "${REGISTRY}/${APP_ENV}-api-nginx:latest",
     ]
-    # cache-from = [ "type=registry,ref=${REGISTRY}/${APP_ENV}-common-nginx:cache" ]
+    #cache-from = equal("local", APP_ENV) ? [ ] : [ "type=registry,ref=${REGISTRY}/${APP_ENV}-common-nginx:cache" ]
+}
+
+target "api-php-fpm" {
+    inherits = [ "_common" ]
+    dockerfile = "docker/api/common/php/Dockerfile"
+    target     = "${APP_ENV}_php_fpm"
+    tags = [
+        "${REGISTRY}/${APP_ENV}-php-fpm:${IMAGE_TAG}",
+        "${REGISTRY}/${APP_ENV}-php-fpm:latest",
+    ]
+    #cache-from = equal("local", APP_ENV) ? [ ] : [ "type=registry,ref=${REGISTRY}/${APP_ENV}-common-php-fpm:cache" ]
+}
+
+target "api-php-cli" {
+    inherits = [ "_common" ]
+    dockerfile = "docker/api/common/php/Dockerfile"
+    target     = "${APP_ENV}_php_cli"
+    tags = [
+        "${REGISTRY}/${APP_ENV}-php-cli:${IMAGE_TAG}",
+        "${REGISTRY}/${APP_ENV}-php-cli:latest",
+    ]
+    #cache-from = equal("local", APP_ENV) ? [ ] : [ "type=registry,ref=${REGISTRY}/${APP_ENV}-common-php-cli:cache" ]
 }
