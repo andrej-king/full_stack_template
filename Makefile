@@ -115,7 +115,7 @@ docker-composer-interactive: ## Run composer:lastest docker container interactiv
 ## API commands
 ## ------
 
-api-init: api-deps-install
+api-init: ## Api init commands
 .PHONY: api-init
 
 api-cli: ## Run interactive php-cli container
