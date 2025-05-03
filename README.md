@@ -26,3 +26,7 @@
   ```bash
   make generate-basic-auth
   ```
+
+### See also
+
+- [App plan](TODO.md)
