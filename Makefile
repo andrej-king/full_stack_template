@@ -33,11 +33,10 @@ DOCKER_BAKE              := docker buildx bake --file docker-bake.hcl
 DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
 PHP_CLI_SERVICE          := $(DOCKER_COMPOSE) run --rm api-php-cli
 
-init: ## Run app
-	@make docker-down-clear \
-		api-clear \
- 		docker-pull docker-build docker-up \
- 		api-init
+init: docker-down-clear \
+	api-clear-temp-files \
+ 	docker-pull docker-build docker-up \
+	api-init ## Run app
 .PHONY: init
 
 prepare: api-prepare
@@ -120,9 +119,20 @@ api-cli: ## Run interactive php-cli container
 	$(PHP_CLI_SERVICE) /bin/bash
 .PHONY: api-cli
 
-api-clear: ## Delete all items except with '.' in start
-	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/log/* var/test/*'
+api-clear: api-clear-temp-files api-reopen-nginx-logs ## Delete all items except with '.' in start
 .PHONY: api-clear
+
+api-clear-temp-files:
+	@$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf \
+		var/cache/* \
+		var/log/* \
+		var/test/* \
+	'
+.PHONY: api-clear-temp-files
+
+api-reopen-nginx-logs:
+	@-$(DOCKER_COMPOSE) exec api-proxy nginx -s reopen
+.PHONY: api-reopen-nginx-logs
 
 api-prepare: ## Prepare api commands
 	@echo 'APP_SECRET=99eaebf0b00eab05c0042c16fe4f71ce' > $(API_DIR)/.env.local
