@@ -4,6 +4,13 @@
 
 ## Guaranteed to work only on x64 Unix architecture
 
+### Stack Details
+
+- [Frontend (NextJS)](https://nextjs.org)
+- [Backend api (Symfony)](https://symfony.com)
+- [DB (PostgreSQL)](https://www.postgresql.org)
+- [Provisioning (ansible)](https://http://ansible.com)
+
 ## Links
 
 - [Gateway dashboard (http://proxy.localhost)](http://proxy.localhost)
@@ -19,3 +26,7 @@
   ```bash
   make generate-basic-auth
   ```
+
+### See also
+
+- [App plan](TODO.md)
