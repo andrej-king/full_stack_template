@@ -119,10 +119,10 @@ api-cli: ## Run interactive php-cli container
 	$(PHP_CLI_SERVICE) /bin/bash
 .PHONY: api-cli
 
-api-clear: api-clear-temp-files api-reopen-nginx-logs ## Delete all items except with '.' in start
+api-clear: api-clear-temp-files api-reopen-nginx-logs ## Delete all api temp files and recreate required
 .PHONY: api-clear
 
-api-clear-temp-files:
+api-clear-temp-files: ## Delete all api temp files
 	@$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf \
 		var/cache/* \
 		var/log/* \
@@ -130,7 +130,7 @@ api-clear-temp-files:
 	'
 .PHONY: api-clear-temp-files
 
-api-reopen-nginx-logs:
+api-reopen-nginx-logs: ## Command for reopen api nginx logs (recreate nginx log files)
 	@-$(DOCKER_COMPOSE) exec api-proxy nginx -s reopen
 .PHONY: api-reopen-nginx-logs
 
