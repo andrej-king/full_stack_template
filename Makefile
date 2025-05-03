@@ -1,6 +1,5 @@
 SHELL = /bin/bash
 API_DIR := api
-COMPOSER_CONTAINER := composer:2.8
 
 # Get the system architecture value
 ARCH_VALUE := $(shell uname -m)
@@ -32,14 +31,12 @@ DOCKER_COMPOSE_OPTIONS   := -f compose.yml -f compose.override.yml
 DOCKER_COMPOSE           := docker compose $(DOCKER_COMPOSE_OPTIONS)
 DOCKER_BAKE              := docker buildx bake --file docker-bake.hcl
 DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
-SIMPLE_COMPOSER_BIN      := $(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) $(COMPOSER_CONTAINER)
 PHP_CLI_SERVICE          := $(DOCKER_COMPOSE) run --rm api-php-cli
 
-init: ## Run app
-	@make docker-down-clear \
-		api-clear \
- 		docker-pull docker-build docker-up \
- 		api-init
+init: docker-down-clear \
+	api-clear-temp-files \
+ 	docker-pull docker-build docker-up \
+	api-init ## Run app
 .PHONY: init
 
 prepare: api-prepare
@@ -108,7 +105,7 @@ generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in
 .PHONY: generate-basic-auth
 
 docker-composer-interactive: ## Run composer:lastest docker container interactive
-	$(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) -it $(COMPOSER_CONTAINER) /bin/bash
+	$(DOCKER_CONTAINER_API_DIR) --user $(UID):$(GID) -it composer:2.8 /bin/bash
 .PHONY: docker-composer-interactive
 
 ##
@@ -122,9 +119,20 @@ api-cli: ## Run interactive php-cli container
 	$(PHP_CLI_SERVICE) /bin/bash
 .PHONY: api-cli
 
-api-clear: ## Delete all items except with '.' in start
-	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/log/* var/test/*'
+api-clear: api-clear-temp-files api-reopen-nginx-logs ## Delete all api temp files and recreate required
 .PHONY: api-clear
+
+api-clear-temp-files: ## Delete all api temp files
+	@$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf \
+		var/cache/* \
+		var/log/* \
+		var/test/* \
+	'
+.PHONY: api-clear-temp-files
+
+api-reopen-nginx-logs: ## Command for reopen api nginx logs (recreate nginx log files)
+	@-$(DOCKER_COMPOSE) exec api-proxy nginx -s reopen
+.PHONY: api-reopen-nginx-logs
 
 api-prepare: ## Prepare api commands
 	@echo 'APP_SECRET=99eaebf0b00eab05c0042c16fe4f71ce' > $(API_DIR)/.env.local
@@ -136,24 +144,24 @@ api-prepare: ## Prepare api commands
 ## ------
 
 api-deps-install: ## Install all api dependencies
-	$(SIMPLE_COMPOSER_BIN) install
+	$(PHP_CLI_SERVICE) composer install
 .PHONY: api-deps-install
 
 composer-update: ## Update api dependencies
-	$(SIMPLE_COMPOSER_BIN) update
-	$(SIMPLE_COMPOSER_BIN) bump
+	$(PHP_CLI_SERVICE) composer update
+	$(PHP_CLI_SERVICE) composer bump
 .PHONY: composer-update
 
 composer-dump: ## Update composer autoload file
-	$(SIMPLE_COMPOSER_BIN) dump-autoload
+	$(PHP_CLI_SERVICE) composer dump-autoload
 .PHONY: composer-dump
 
 composer-require: ## Add dependencies
-	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(SIMPLE_COMPOSER_BIN) require $${COMPOSE_DEPENDENCIES}
+	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(PHP_CLI_SERVICE) composer require $${COMPOSE_DEPENDENCIES}
 .PHONY: composer-require
 
 composer-require-dev: ## add dev dependencies
-	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(SIMPLE_COMPOSER_BIN) require --dev $${COMPOSE_DEPENDENCIES}
+	@read -p "Dependencies: " COMPOSE_DEPENDENCIES && $(PHP_CLI_SERVICE) composer require --dev $${COMPOSE_DEPENDENCIES}
 .PHONY: composer-require-dev
 
 ##
@@ -161,7 +169,7 @@ composer-require-dev: ## add dev dependencies
 ## ------
 
 composer-validate: ## Check composer.json and composer.lock with composer validate (https://getcomposer.org/doc/03-cli.md#validate)
-	$(SIMPLE_COMPOSER_BIN) validate --strict --no-check-publish
+	$(PHP_CLI_SERVICE) composer validate --strict --no-check-publish
 .PHONY: composer-validate
 
 ##
