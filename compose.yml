@@ -43,6 +43,23 @@ services:
         image: ${REGISTRY}/${APP_ENV}-php-cli:${IMAGE_TAG}
         secrets:
             - db_password
+    database:
+        image: postgres:17.5-alpine3.21
+        secrets:
+            - db_password
+        environment:
+            TZ: UTC
+            POSTGRES_DB: app
+            POSTGRES_USER: app
+            POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+        healthcheck:
+            test: [ "CMD", "pg_isready", "-d", "app", "-U", "app" ]
+            timeout: 5s
+            retries: 5
+        ports:
+            - '${DB_PORT_EXTERNAL}:5432'
+        volumes:
+            - postgres:/var/lib/postgresql/data:rw
 
 secrets:
     db_password:
@@ -52,3 +69,6 @@ networks:
     gateway-network:
         name: gateway-network
         external: true
+
+volumes:
+    postgres: null
