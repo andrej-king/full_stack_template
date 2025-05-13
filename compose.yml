@@ -37,18 +37,47 @@ services:
     api-php-fpm:
         image: ${REGISTRY}/${APP_ENV}-php-fpm:${IMAGE_TAG}
         secrets:
-            - db_password
+            - db_app_password
 
     api-php-cli:
         image: ${REGISTRY}/${APP_ENV}-php-cli:${IMAGE_TAG}
         secrets:
-            - db_password
+            - db_app_password
+
+    database:
+        image: postgres:17.5-alpine3.21
+        secrets:
+            - db_root_password
+            - db_app_password
+        environment:
+            TZ: UTC
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD_FILE: /run/secrets/db_root_password
+            APP_DB_NAME: app
+            APP_DB_USER: app
+            APP_DB_PASSWORD: password
+            #APP_DB_PASSWORD_FILE: /run/secrets/db_app_password
+        healthcheck:
+            test: [ "CMD", "pg_isready", "-d", "app", "-U", "app" ]
+            timeout: 5s
+            retries: 5
+        ports:
+            - '${DB_PORT_EXTERNAL}:5432'
+        volumes:
+            - postgres:/var/lib/postgresql/data:rw
+            - ./docker/common/postgres/init/:/docker-entrypoint-initdb.d/
 
 secrets:
-    db_password:
-        file: ./docker/secrets/db_password
+    db_root_password:
+        file: ./docker/secrets/db_root_password
+    db_app_password:
+        file: ./docker/secrets/db_app_password
 
 networks:
     gateway-network:
         name: gateway-network
         external: true
+
+volumes:
+    postgres: null
