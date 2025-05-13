@@ -8,7 +8,7 @@
 
 - [Frontend (NextJS)](https://nextjs.org)
 - [Backend api (Symfony)](https://symfony.com)
-- [DB (PostgreSQL 17)](https://www.postgresql.org)
+- [DB (PostgreSQL)](https://www.postgresql.org)
 - [Provisioning (ansible)](https://http://ansible.com)
 
 ## Links
