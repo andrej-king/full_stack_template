@@ -9,7 +9,7 @@ variable "UID" { default = 1000 }
 variable "GID" { default = 1000 }
 
 group "local" {
-    targets = [ "api-nginx" ]
+    targets = [ "api-nginx", "api-php-fpm", "api-php-cli" ]
 }
 
 group "dev" {
@@ -44,7 +44,8 @@ target "api-nginx" {
 
 target "api-php-fpm" {
     inherits = [ "_common" ]
-    dockerfile = "docker/api/common/php/Dockerfile"
+    context = "api"
+    dockerfile = "docker/common/php/Dockerfile"
     target     = "${APP_ENV}_php_fpm"
     tags = [
         "${REGISTRY}/${APP_ENV}-php-fpm:${IMAGE_TAG}",
@@ -55,7 +56,8 @@ target "api-php-fpm" {
 
 target "api-php-cli" {
     inherits = [ "_common" ]
-    dockerfile = "docker/api/common/php/Dockerfile"
+    context = "api"
+    dockerfile = "docker/common/php/Dockerfile"
     target     = "${APP_ENV}_php_cli"
     tags = [
         "${REGISTRY}/${APP_ENV}-php-cli:${IMAGE_TAG}",

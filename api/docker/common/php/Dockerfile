@@ -75,8 +75,8 @@ RUN <<EOF
 EOF
 
 # Copy common config files
-COPY ./docker/api/common/php/php-fpm.d /usr/local/etc/php-fpm.d
-COPY ./docker/api/common/php/conf.d $PHP_INI_DIR/conf.d
+COPY ./docker/common/php/php-fpm.d /usr/local/etc/php-fpm.d
+COPY ./docker/common/php/conf.d $PHP_INI_DIR/conf.d
 
 COPY ./docker/common/wait-for-it.sh /usr/local/bin/wait-for-it
 RUN chmod 555 /usr/local/bin/wait-for-it
@@ -145,8 +145,8 @@ RUN <<EOF
 EOF
 
 # Copy common config files
-COPY ./docker/api/common/php/php-fpm.d /usr/local/etc/php-fpm.d
-COPY ./docker/api/common/php/conf.d $PHP_INI_DIR/conf.d
+COPY ./docker/common/php/php-fpm.d /usr/local/etc/php-fpm.d
+COPY ./docker/common/php/conf.d $PHP_INI_DIR/conf.d
 
 USER www-data
 
@@ -187,7 +187,7 @@ EOF
 RUN mv $PHP_INI_DIR/php.ini-development $PHP_INI_DIR/php.ini
 
 # Copy config files
-COPY ./docker/api/local/php/conf.d $PHP_INI_DIR/conf.d
+COPY ./docker/local/php/conf.d $PHP_INI_DIR/conf.d
 
 USER www-data
 
@@ -218,8 +218,8 @@ EOF
 RUN mv $PHP_INI_DIR/php.ini-development $PHP_INI_DIR/php.ini
 
 # Copy config files
-COPY ./docker/api/local/php/conf.d $PHP_INI_DIR/conf.d
-COPY ./docker/api/local/php-fpm/conf.d $PHP_INI_DIR/conf.d
+COPY ./docker/local/php/conf.d $PHP_INI_DIR/conf.d
+COPY ./docker/local/php-fpm/conf.d $PHP_INI_DIR/conf.d
 
 USER www-data
 
