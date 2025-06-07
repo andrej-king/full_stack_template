@@ -32,6 +32,7 @@ target "_common" {
 
 target "api-nginx" {
     inherits = [ "_common" ]
+    context = "api"
     dockerfile = "docker/common/nginx/Dockerfile"
     target     = "${APP_ENV}_api_nginx"
     tags = [
@@ -43,7 +44,8 @@ target "api-nginx" {
 
 target "api-php-fpm" {
     inherits = [ "_common" ]
-    dockerfile = "docker/api/common/php/Dockerfile"
+    context = "api"
+    dockerfile = "docker/common/php/Dockerfile"
     target     = "${APP_ENV}_php_fpm"
     tags = [
         "${REGISTRY}/${APP_ENV}-php-fpm:${IMAGE_TAG}",
@@ -54,7 +56,8 @@ target "api-php-fpm" {
 
 target "api-php-cli" {
     inherits = [ "_common" ]
-    dockerfile = "docker/api/common/php/Dockerfile"
+    context = "api"
+    dockerfile = "docker/common/php/Dockerfile"
     target     = "${APP_ENV}_php_cli"
     tags = [
         "${REGISTRY}/${APP_ENV}-php-cli:${IMAGE_TAG}",
