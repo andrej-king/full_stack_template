@@ -9,7 +9,7 @@ variable "UID" { default = 1000 }
 variable "GID" { default = 1000 }
 
 group "local" {
-    targets = [ "api-nginx", "api-php-fpm", "api-php-cli" ]
+    targets = [ "api-nginx" ]
 }
 
 group "dev" {
@@ -32,6 +32,7 @@ target "_common" {
 
 target "api-nginx" {
     inherits = [ "_common" ]
+    context = "api"
     dockerfile = "docker/common/nginx/Dockerfile"
     target     = "${APP_ENV}_api_nginx"
     tags = [
