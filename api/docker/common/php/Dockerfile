@@ -3,86 +3,39 @@ ARG XDEBUG_VERSION=3.4.2
 
 FROM composer:2.8 AS composer
 
-# =============== SYMFONY CLI IMAGE ===============
-FROM --platform=$BUILDPLATFORM php:${PHP_VERSION}-cli-alpine3.21 AS symfony_cli
+#region Symfony CLI
+FROM --platform=$BUILDPLATFORM php:${PHP_VERSION}-cli-bookworm AS symfony_cli
+USER root
+COPY --chmod=755 ./docker/common/php/scripts/install_symfony_cli.sh /setup.sh
+RUN /bin/bash /setup.sh
+#endregion
 
-# Install symfony-cli
-RUN <<EOF
-    set -xe
-    apk add --no-cache bash
-    curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.alpine.sh' | /bin/bash
-    apk add --no-cache symfony-cli
-EOF
-
-# =============== COMMON PHP-CLI IMAGE ===============
+#region Common php-cli
 FROM --platform=$BUILDPLATFORM php:${PHP_VERSION}-cli-bookworm AS common_php_cli
 
 ARG UID
 ARG GID
+ENV ACCEPT_EULA=Y
 
 WORKDIR /app
 
 USER root
 
-ENV ACCEPT_EULA=Y
+# Copy required files
+COPY --chmod=555 ./docker/common/php/scripts /scripts
+COPY --chmod=555 ./docker/common/wait-for-it.sh /usr/local/bin/wait-for-it
 
-# Replace default user / group id
-RUN <<EOF
-    set -xe
-    groupmod --gid=${GID} www-data || true
-    usermod --uid=${UID} --gid=${GID} www-data
-    chown www-data /app /var/www
-EOF
-
-# Install common dependencies
-RUN <<EOF
-    set -xe
-    apt-get update
-    apt-get install --no-install-recommends --no-install-suggests -q -y \
-        gnupg2 \
-        libicu-dev \
-        libpq-dev \
-        libzip-dev \
-        postgresql-client \
-        unzip \
-        openssl \
-        $PHPIZE_DEPS
-    docker-php-ext-enable \
-        opcache
-    docker-php-ext-configure \
-        pgsql -with-pgsql=/usr/local/pgsql
-    docker-php-ext-install \
-        intl \
-        pdo_pgsql \
-        zip \
-        bcmath
-    # Remove dependencies that are no longer needed
-    apt-get clean
-    apt-get remove -q -y \
-        libicu-dev \
-        libpq-dev \
-        libzip-dev
-EOF
-
-# Clean redundant files
-RUN <<EOF
-    set -xe
-    apt-get update
-    apt-get clean
-    apt-get remove -q -y \
-        $PHPIZE_DEPS
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
-EOF
+# Exec scripts
+RUN /bin/bash /scripts/setup_user.sh                  # Replace default user / group id
+RUN /bin/bash /scripts/install_common_dependencies.sh # Install common dependencies
+RUN /bin/bash /scripts/clean_redundant_files.sh       # Clean redundant files
 
 # Copy common config files
 COPY ./docker/common/php/php-fpm.d /usr/local/etc/php-fpm.d
 COPY ./docker/common/php/conf.d $PHP_INI_DIR/conf.d
 
-COPY ./docker/common/wait-for-it.sh /usr/local/bin/wait-for-it
-RUN chmod 555 /usr/local/bin/wait-for-it
-
 USER www-data
-
+#endregion
 
 # =============== COMMON PHP-FPM IMAGE ===============
 FROM --platform=$BUILDPLATFORM php:${PHP_VERSION}-fpm-bookworm AS common_php_fpm
